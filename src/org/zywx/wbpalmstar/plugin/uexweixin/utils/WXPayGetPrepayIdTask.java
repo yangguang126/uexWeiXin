@@ -75,20 +75,6 @@ public class WXPayGetPrepayIdTask {
 		req.nonceStr = payData.getNoncestr();
 		req.timeStamp = payData.getTimestamp();
 
-		// List<NameValuePair> signParams = new LinkedList<NameValuePair>();
-		// signParams.add(new BasicNameValuePair(JsConst.APPID, req.appId));
-		// signParams.add(new BasicNameValuePair(JsConst.NONCESTR,
-		// req.nonceStr));
-		// signParams.add(new BasicNameValuePair(JsConst.PACKAGE_VALUE,
-		// req.packageValue));
-		// signParams.add(new BasicNameValuePair(JsConst.PARTNERID,
-		// req.partnerId));
-		// signParams.add(new BasicNameValuePair(JsConst.PREPAYID,
-		// req.prepayId));
-		// signParams.add(new BasicNameValuePair(JsConst.TIMESTAMP,
-		// req.timeStamp));
-
-		// req.sign = genAppSign(signParams);
 		req.sign = payData.getSign();
 
 		msgApi.sendReq(req);
@@ -112,7 +98,7 @@ public class WXPayGetPrepayIdTask {
 				}
 			}
 			if (mListener != null) {
-				mListener.onGetPrepayResult(jsonObject.toString());
+				mListener.onGetPrepayResult(jsonObject);
 			}
 		}
 

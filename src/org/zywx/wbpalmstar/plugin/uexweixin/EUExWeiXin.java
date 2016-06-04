@@ -86,6 +86,22 @@ public class EUExWeiXin extends EUExBase {
 	public static final String CB_SEND_TEXT_CONTENT = "uexWeiXin.cbSendTextContent";
 	public static final String CB_SEND_IMAGE_CONTENT = "uexWeiXin.cbSendImageContent";
 	// 新
+    //分享text的回调函数
+    public String shareTextFunId;
+    //分享图片的回调函数
+    private String shareImageFunId;
+    private String shareLinkFunId;
+    private String loginFunId;
+    private String getLoginAccessTokenFunId;
+    private String getLoginRefreshAccessTokenFunId;
+    private String getLoginCheckAccessTokenFunId;
+    private String getLoginUnionIDFuncId;
+    private String getPrepayIdFuncId;
+    private String startPayFuncId;
+	private String getAccessTokenFunId;
+	private String getAccessTokenLocalFunId;
+
+
 	public static final String CB_SHARE_TEXT_CONTENT = "uexWeiXin.cbShareTextContent";
 	public static final String CB_SHARE_IMAGE_CONTENT = "uexWeiXin.cbShareImageContent";
 	public static final String CB_SHARE_LINK_CONTENT = "uexWeiXin.cbShareLinkContent";
@@ -132,9 +148,10 @@ public class EUExWeiXin extends EUExBase {
 	public static final String CB_GET_PAY_RESULT = "uexWeiXin.cbGotoPay";
 	public static final String CB_GET_ACCESS_TOKEN_LOCAL = "uexWeiXin.cbGetAccessTokenLocal";
 
-	/**
+
+    /**
 	 * 构造方法
-	 * 
+	 *
 	 * @param context
 	 * @param parent
 	 */
@@ -147,16 +164,16 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 初始化WeiXinCallback
-	 * 
-	 * 
+	 *
+	 *
 	 * @tips 其实回调是在
-	 * 
+	 *
 	 *       $应用程序包名$.wxapi.WXEntryActivity和WXPayEntryActivity
-	 * 
+	 *
 	 *       中被触发的
-	 * 
+	 *
 	 * @tips 这是微信的机制，别的地方收不到微信传来的回调，只能在这两个Activity里
-	 * 
+	 *
 	 */
 	private void initWeiXinCallback() {
 
@@ -184,17 +201,20 @@ public class EUExWeiXin extends EUExBase {
 
 				// 文字
 				case SHARE_TYPE_TEXT:
-					callbackPlugin2Js(CB_SHARE_TEXT_CONTENT, errCode == 0 ? "0" : "1");
+                    callbackPlugin2Js(CB_SHARE_TEXT_CONTENT, errCode == 0 ? "0" : "1");
+                    callbackToJs(Integer.parseInt(shareTextFunId), false, errCode == 0 ? "0" : "1");
 					break;
 
 				// 图片
 				case SHARE_TYPE_IMAGE:
-					callbackPlugin2Js(CB_SHARE_IMAGE_CONTENT, errCode == 0 ? "0" : "1");
+                    callbackPlugin2Js(CB_SHARE_IMAGE_CONTENT, errCode == 0 ? "0" : "1");
+                    callbackToJs(Integer.parseInt(shareImageFunId), false, errCode == 0 ? "0" : "1");
 					break;
 
 				// 链接
 				case SHARE_TYPE_LINK:
-					callbackPlugin2Js(CB_SHARE_LINK_CONTENT, errCode == 0 ? "0" : "1");
+                    callbackPlugin2Js(CB_SHARE_LINK_CONTENT, errCode == 0 ? "0" : "1");
+                    callbackToJs(Integer.parseInt(shareLinkFunId), false, errCode == 0 ? "0" : "1");
 					break;
 
 				default:
@@ -227,6 +247,7 @@ public class EUExWeiXin extends EUExBase {
 						resultVO.setCountry(resp2.country);
 						String resultStr = DataHelper.gson.toJson(resultVO);
 						// shareCallBack(JsConst.CALLBACK_LOGIN, resultStr);
+                        callbackToJs(Integer.parseInt(loginFunId), false, resultVO);
 						callbackPlugin2Js(JsConst.CALLBACK_LOGIN, resultStr);
 					}
 					isLoginNew = false;
@@ -240,6 +261,7 @@ public class EUExWeiXin extends EUExBase {
 			public void callbackPayResult(BaseResp resp) {
 				callbackOldInterface(CB_GET_PAY_RESULT, 0, EUExCallback.F_C_JSON, getJson(resp.errCode + "", resp.errStr));
 				callbackPlugin2JsAsync(JsConst.CALLBACK_START_PAY, getJson(resp.errCode + "", resp.errStr));
+                callbackToJs(Integer.parseInt(startPayFuncId), false, resp.errStr);
 			}
 		};
 	}
@@ -262,7 +284,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 注册应用到微信
-	 * 
+	 *
 	 * @param mAppId
 	 *            从微信开放平台申请的appId
 	 * @return true 注册成功， false 注册失败
@@ -283,29 +305,28 @@ public class EUExWeiXin extends EUExBase {
 		if (regOk) {
 			SharedPreferencesUtil.saveAppIdInSP(mContext, mAppId);
 		}
-		jsCallback(CB_REGISTER_WXAPP_RESULT, 0, EUExCallback.F_C_INT, regOk ? 0 : 1);// 注册回调0-成功1-失败
-		return regOk;
+        jsCallback(CB_REGISTER_WXAPP_RESULT, 0, EUExCallback.F_C_INT, regOk ? 0 : 1);// 注册回调0-成功1-失败
+        return regOk;
 	}
 
 	/**
 	 * 判断是否安装微信应用，
-	 * 
+	 *
 	 * @return true 已安装， false 未安装
 	 */
 	public boolean isWXAppInstalled(String[] args) {
 		MLog.getIns().d("isWXAppInstalled");
 		// 判断是否安装微信，安装返回true。
 		boolean isWXInstalled = mApi.isWXAppInstalled();
-		jsCallback(CB_IS_WXAPP_INSTALLIED, 0, EUExCallback.F_C_TEXT, isWXInstalled ? 0 : 1);
-		return isWXInstalled;
+        jsCallback(CB_IS_WXAPP_INSTALLIED, 0, EUExCallback.F_C_TEXT, isWXInstalled ? 0 : 1);
+        return isWXInstalled;
 	}
 
-	// TODO
 	/* -------------------微信分享---------------------- */
 
 	/**
 	 * 分享文本(旧接口，不推荐使用)
-	 * 
+	 *
 	 * @param params
 	 * @return
 	 */
@@ -328,7 +349,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 分享文本(新接口)
-	 * 
+	 *
 	 * @param params
 	 * @return
 	 */
@@ -349,7 +370,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 分享文本的处理逻辑
-	 * 
+	 *
 	 * @param scene
 	 * @param text
 	 * @return
@@ -377,7 +398,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 分享图片(旧接口，不推荐使用)
-	 * 
+	 *
 	 * @param params
 	 * @return
 	 */
@@ -401,15 +422,23 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 分享图片(新接口)
-	 * 
+	 *
 	 * @param params
 	 * @return
 	 */
 	public boolean shareImageContent(String[] params) {
+        if (params == null || params.length < 1) {
+            errorCallback(0, 0, "error params!");
+            return false;
+        }
 		MLog.getIns().d("start");
 		mShareType = SHARE_TYPE_IMAGE;
 		try {
 			JSONObject jsonObject = new JSONObject(params[0]);
+
+            if (params.length == 2) {
+                shareImageFunId = params[1];
+            }
 			int scene = jsonObject.getInt(PARAMS_JSON_KEY_SCENE);
 			String thumbImg = jsonObject.getString(PARAMS_JSON_KEY_THUMBIMG);
 			String image = jsonObject.getString(PARAMS_JSON_KEY_IMAGE);
@@ -423,7 +452,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 分享图片的处理逻辑
-	 * 
+	 *
 	 * @param scene
 	 *            发送场景，0 微信， 1 朋友圈
 	 * @param thumImgPath
@@ -460,16 +489,23 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 分享链接
-	 * 
+	 *
 	 * @param params
 	 * @return
 	 */
 	public boolean shareLinkContent(String[] params) {
+        if (params == null || params.length < 1) {
+            errorCallback(0, 0, "error params!");
+            return false;
+        }
 		MLog.getIns().d("start");
 		mShareType = SHARE_TYPE_LINK;
 		try {
 			JSONObject jsonObject = new JSONObject(params[0]);
-			int scene = jsonObject.getInt(PARAMS_JSON_KEY_SCENE);
+            if (params.length == 2) {
+                shareLinkFunId = params[1];
+            }
+            int scene = jsonObject.getInt(PARAMS_JSON_KEY_SCENE);
 			String thumbImg = jsonObject.getString(PARAMS_JSON_KEY_THUMBIMG);
 			String wedpageUrl = jsonObject.getString(PARAMS_JSON_KEY_WEDPAGEURL);
 			String title = jsonObject.getString(PARAMS_JSON_KEY_TITLE);
@@ -484,7 +520,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 分享链接的处理逻辑
-	 * 
+	 *
 	 * @param scene
 	 *            发送场景，0 微信， 1 朋友圈
 	 * @param thumImgPath
@@ -522,7 +558,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 创建transaction字段
-	 * 
+	 *
 	 * @param type
 	 * @return
 	 */
@@ -537,7 +573,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 微信授权登录
-	 * 
+	 *
 	 * @param params
 	 */
 	public void weiXinLogin(String[] params) {
@@ -561,7 +597,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 微信登陆获取accessToken
-	 * 
+	 *
 	 * @param parms
 	 */
 	public void getWeiXinLoginAccessToken(String[] parms) {
@@ -589,7 +625,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 微信登陆获取refreshToken
-	 * 
+	 *
 	 * @param parms
 	 */
 	public void getWeiXinLoginRefreshAccessToken(String[] parms) {
@@ -615,7 +651,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 检测微信登陆的token
-	 * 
+	 *
 	 * @param parms
 	 */
 	public void getWeiXinLoginCheckAccessToken(String[] parms) {
@@ -640,7 +676,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 获取个人信息
-	 * 
+	 *
 	 * @param parms
 	 */
 	public void getWeiXinLoginUnionID(String[] parms) {
@@ -669,11 +705,11 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 微信授权登录
-	 * 
+	 *
 	 * @param params
 	 */
 	public void login(String[] params) {
-		if (params == null || params.length < 1) {
+		if (params == null || params.length < 2) {
 			errorCallback(0, 0, "error params!");
 			return;
 		}
@@ -692,6 +728,9 @@ public class EUExWeiXin extends EUExBase {
 			errorCallback(0, 0, "please register first!");
 			return;
 		}
+        if (params.length == 2) {
+            loginFunId = params[1];
+        }
 		isLoginNew = true;
 		try {
 			LoginVO dataVO = DataHelper.gson.fromJson(json, LoginVO.class);
@@ -709,7 +748,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 微信登陆获取accessToken
-	 * 
+	 *
 	 * @param parms
 	 */
 	public void getLoginAccessToken(String[] params) {
@@ -729,6 +768,9 @@ public class EUExWeiXin extends EUExBase {
 	private void getLoginAccessTokenMsg(String[] params) {
 		MLog.getIns().i("getLoginAccessTokenMsg->" + Arrays.toString(params));
 		String json = params[0];
+        if (params.length == 2) {
+            getLoginAccessTokenFunId = params[1];
+        }
 		if (TextUtils.isEmpty(mAppId)) {
 			errorCallback(0, 0, "please register first!");
 			return;
@@ -749,7 +791,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 微信登陆获取refreshToken
-	 * 
+	 *
 	 * @param params
 	 */
 	public void getLoginRefreshAccessToken(String[] params) {
@@ -769,6 +811,9 @@ public class EUExWeiXin extends EUExBase {
 	private void getLoginRefreshAccessTokenMsg(String[] params) {
 		MLog.getIns().i("getLoginRefreshAccessTokenMsg->" + Arrays.toString(params));
 		String json = params[0];
+        if (params.length == 2) {
+            getLoginRefreshAccessTokenFunId = params[1];
+        }
 		if (TextUtils.isEmpty(mAppId)) {
 			errorCallback(0, 0, "please register first!");
 			return;
@@ -789,7 +834,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 检测微信登陆的token
-	 * 
+	 *
 	 * @param params
 	 */
 	public void getLoginCheckAccessToken(String[] params) {
@@ -809,6 +854,9 @@ public class EUExWeiXin extends EUExBase {
 	private void getLoginCheckAccessTokenMsg(String[] params) {
 		MLog.getIns().i("getLoginCheckAccessTokenMsg->" + Arrays.toString(params));
 		String json = params[0];
+        if (params.length == 2) {
+            getLoginCheckAccessTokenFunId = params[1];
+        }
 		try {
 			LoginCheckTokenVO dataVO = DataHelper.gson.fromJson(json, LoginCheckTokenVO.class);
 			isLoginNew = true;
@@ -824,11 +872,11 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 获取个人信息
-	 * 
+	 *
 	 * @param params
 	 */
 	public void getLoginUnionID(String[] params) {
-		if (params == null || params.length < 1) {
+		if (params == null || params.length < 2) {
 			errorCallback(0, 0, "error params!");
 			return;
 		}
@@ -844,6 +892,9 @@ public class EUExWeiXin extends EUExBase {
 	private void getLoginUnionIDMsg(String[] params) {
 		MLog.getIns().i("getLoginUnionIDMsg->" + Arrays.toString(params));
 		String json = params[0];
+        if (params.length == 2) {
+            getLoginUnionIDFuncId = params[1];
+        }
 		try {
 			LoginCheckTokenVO dataVO = DataHelper.gson.fromJson(json, LoginCheckTokenVO.class);
 			isLoginNew = true;
@@ -859,7 +910,7 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 微信登录Http请求AsyncTask
-	 * 
+	 *
 	 * @author Administrator
 	 *
 	 */
@@ -882,16 +933,28 @@ public class EUExWeiXin extends EUExBase {
 			if (isLoginNew) {
 				switch (mLoginType) {
 				case LOGIN_TYPE_GET_ACCESSTOKEN:
-					callbackPlugin2Js(JsConst.CALLBACK_GET_LOGIN_ACCESS_TOKEN, result);
+                    callbackPlugin2Js(JsConst.CALLBACK_GET_LOGIN_ACCESS_TOKEN, result);
+                    if(getLoginAccessTokenFunId != null) {
+                        callbackToJs(Integer.parseInt(getLoginAccessTokenFunId), false, result);
+                    }
 					break;
 				case LOGIN_TYPE_REFRESH_ACCESSTOKEN:
-					callbackPlugin2Js(JsConst.CALLBACK_GET_LOGIN_REFRESH_ACCESS_TOKEN, result);
+                    callbackPlugin2Js(JsConst.CALLBACK_GET_LOGIN_REFRESH_ACCESS_TOKEN, result);
+                    if(getLoginRefreshAccessTokenFunId != null) {
+                        callbackToJs(Integer.parseInt(getLoginRefreshAccessTokenFunId), false, result);
+                    }
 					break;
 				case LOGIN_TYPE_CHECK_ACCESSTOKEN:
-					callbackPlugin2Js(JsConst.CALLBACK_GET_LOGIN_CHECK_ACCESS_TOKEN, result);
+                    callbackPlugin2Js(JsConst.CALLBACK_GET_LOGIN_CHECK_ACCESS_TOKEN, result);
+                    if(getLoginCheckAccessTokenFunId != null) {
+                        callbackToJs(Integer.parseInt(getLoginCheckAccessTokenFunId), false, result);
+                    }
 					break;
 				case LOGIN_TYPE_UNION_ID:
-					callbackPlugin2Js(JsConst.CALLBACK_GET_LOGIN_UNION_I_D, result);
+                    callbackPlugin2Js(JsConst.CALLBACK_GET_LOGIN_UNION_I_D, result);
+                    if(getLoginUnionIDFuncId != null) {
+                        callbackToJs(Integer.parseInt(getLoginUnionIDFuncId), false, result);
+                    }
 					break;
 				default:
 					break;
@@ -936,10 +999,10 @@ public class EUExWeiXin extends EUExBase {
 
 	/**
 	 * 是否支持支付
-	 * 
+	 *
 	 * @param params
 	 */
-	public void isSupportPay(String[] params) {
+	public boolean isSupportPay(String[] params) {
 		// getWXAppSupportSAPI是否支持微信版本。
 		boolean isPaySupported = mApi.getWXAppSupportAPI() >= Build.PAY_SUPPORTED_SDK_INT;
 		// isPaySupported判断是否支持已安装的微信版本。
@@ -948,11 +1011,20 @@ public class EUExWeiXin extends EUExBase {
 		} else {
 			jsCallback(CB_IS_PAY_SUPPORTED, 0, EUExCallback.F_C_INT, 1);
 		}
+        return isPaySupported;
 	}
 
-	public void getAccessToken(String[] params) {
-		new GetAccessTokenTask(params[0], params[1]).execute();
-	}
+    public void getAccessToken(String[] params) {
+        if (params != null && params.length < 2) {
+            errorCallback(0, 0, "error params!");
+            return;
+        }
+        if (params.length ==3) {
+            getAccessTokenFunId = params[3];
+        }
+
+        new GetAccessTokenTask(params[0], params[1]).execute();
+    }
 
 	String contentAccess = "";
 
@@ -978,9 +1050,14 @@ public class EUExWeiXin extends EUExBase {
 			}
 
 			if (result.localRetCode == LocalRetCode.ERR_OK) {
+				if (null != getAccessTokenFunId) {
+					callbackToJs(Integer.parseInt(getAccessTokenFunId), false, contentAccess);
+				}
 				jsCallback(CB_GET_ACCESS_TOKEN, 0, EUExCallback.F_C_TEXT, contentAccess);
-
 			} else {
+				if (null != getAccessTokenFunId) {
+					callbackToJs(Integer.parseInt(getAccessTokenFunId), false, result.localRetCode.name());
+				}
 				jsCallback(CB_GET_ACCESS_TOKEN, 0, EUExCallback.F_C_TEXT, result.localRetCode.name());
 			}
 		}
@@ -1010,6 +1087,10 @@ public class EUExWeiXin extends EUExBase {
 
 	// 获取本地存储的Token数据。
 	public void getAccessTokenLocal(String[] params) {
+		//4.0接口
+		if (null != params && params.length ==1) {
+			getAccessTokenLocalFunId = params[0];
+		}
 		setCallBackData();
 	}
 
@@ -1017,9 +1098,15 @@ public class EUExWeiXin extends EUExBase {
 
 	public void setCallBackData() {
 		if (getLocalData().localRetCode == LocalRetCode.ERR_OK) {
+			if (null != getAccessTokenLocalFunId) {
+				callbackToJs(Integer.parseInt(getAccessTokenFunId), false, contentAccessLocal);
+			}
 			jsCallback(CB_GET_ACCESS_TOKEN_LOCAL, 0, EUExCallback.F_C_TEXT, contentAccessLocal);
 
 		} else {
+			if (null != getAccessTokenLocalFunId) {
+				callbackToJs(Integer.parseInt(getAccessTokenFunId), false, getLocalData().localRetCode.name());
+			}
 			jsCallback(CB_GET_ACCESS_TOKEN_LOCAL, 0, EUExCallback.F_C_TEXT, getLocalData().localRetCode.name());
 		}
 	}
@@ -1357,6 +1444,9 @@ public class EUExWeiXin extends EUExBase {
 	private void getPrepayIdMsg(String[] params) {
 		try {
 			String json = params[0];
+            if (params.length == 2) {
+                getPrepayIdFuncId = params[1];
+            }
 			PrePayDataVO dataVO = DataHelper.gson.fromJson(json, PrePayDataVO.class);
 			WXPayGetPrepayIdTask task = new WXPayGetPrepayIdTask(mContext, dataVO, listener);
 			task.getPrepayId();
@@ -1382,6 +1472,9 @@ public class EUExWeiXin extends EUExBase {
 
 	private void startPayMsg(String[] params) {
 		String json = params[0];
+        if (params.length == 2) {
+            startPayFuncId = params[1];
+        }
 		try {
 			PayDataVO dataVO = DataHelper.gson.fromJson(json, PayDataVO.class);
 			JSONObject jsonObject = new JSONObject(json);
@@ -1462,13 +1555,14 @@ public class EUExWeiXin extends EUExBase {
 
 	OnPayResultListener listener = new OnPayResultListener() {
 		@Override
-		public void onGetPrepayResult(String json) {
-			callbackPlugin2Js(JsConst.CALLBACK_GET_PREPAY_ID, json);
+		public void onGetPrepayResult(JSONObject json) {
+            callbackPlugin2Js(JsConst.CALLBACK_GET_PREPAY_ID, json.toString());
+            callbackToJs(Integer.parseInt(getPrepayIdFuncId), false, json);
 		}
 	};
 
 	public interface OnPayResultListener {
-		public void onGetPrepayResult(String jsonData);
+		public void onGetPrepayResult(JSONObject jsonData);
 	}
 
 }
